@@ -3724,6 +3724,7 @@ STR_6273    :Music
 STR_6274    :Can't set colour scheme...
 STR_6275    :{WINDOW_COLOUR_2}Station style:
 STR_6276    :{RED}{STRINGID} has guests getting stuck, possibly due to invalid ride type or operating mode.
+<<<<<<< HEAD
 STR_6277    :{WINDOW_COLOUR_2}Station index: {BLACK}{COMMA16}
 STR_6278    :Autosave amount
 STR_6279    :{SMALLFONT}{BLACK}Number of autosaves that should be kept
@@ -3751,6 +3752,8 @@ STR_6300    :{SMALLFONT}{BLACK}Download all missing objects if available online.
 STR_6301    :{SMALLFONT}{BLACK}Copy the selected object name to the clipboard.
 STR_6302    :{SMALLFONT}{BLACK}Copy the entire list of missing objects to the clipboard.
 STR_6303    :Downloading object ({COMMA16} / {COMMA16}): [{STRING}]
+STR_6304    :Multithreading
+STR_6305    :{SMALLFONT}{BLACK}Use multiple threads to render
 
 #############
 # Scenarios #
