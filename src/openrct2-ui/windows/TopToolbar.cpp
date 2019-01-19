@@ -285,6 +285,7 @@ static void top_toolbar_debug_menu_dropdown(int16_t dropdownIndex);
 static void top_toolbar_init_network_menu(rct_window* window, rct_widget* widget);
 static void top_toolbar_network_menu_dropdown(int16_t dropdownIndex);
 
+static bool toggle_window_by_class(rct_windowclass c);
 static void toggle_footpath_window();
 static void toggle_land_window(rct_window* topToolbar, rct_widgetindex widgetIndex);
 static void toggle_clear_scenery_window(rct_window* topToolbar, rct_widgetindex widgetIndex);
@@ -363,7 +364,7 @@ static void window_top_toolbar_mouseup(rct_window* w, rct_widgetindex widgetInde
             toggle_footpath_window();
             break;
         case WIDX_CONSTRUCT_RIDE:
-            context_open_window(WC_CONSTRUCT_RIDE);
+            toggle_window_by_class(WC_CONSTRUCT_RIDE);
             break;
         case WIDX_RIDES:
             context_open_window(WC_RIDE_LIST);
@@ -3406,21 +3407,30 @@ static void top_toolbar_view_menu_dropdown(int16_t dropdownIndex)
 }
 
 /**
- *
- *  rct2: 0x0066CCE7
+ * @param c window class to toggle
+ * @return whether the window opened
  */
-static void toggle_footpath_window()
+static bool toggle_window_by_class(rct_windowclass c)
 {
-    if (window_find_by_class(WC_FOOTPATH) == nullptr)
+    if (window_find_by_class(c) == nullptr)
     {
-        context_open_window(WC_FOOTPATH);
+        context_open_window(c);
+        return true;
     }
     else
     {
-        tool_cancel();
-        window_close_by_class(WC_FOOTPATH);
+        window_close_by_class(c);
+        return false;
     }
 }
+
+static void toggle_footpath_window()
+{
+    if( !toggle_window_by_class(WC_FOOTPATH) )
+    {
+        tool_cancel();
+    }
+ }
 
 /**
  *
