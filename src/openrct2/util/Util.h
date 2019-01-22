@@ -34,7 +34,28 @@ bool writeentirefile(const utf8* path, const void* buffer, size_t length);
 bool sse41_available();
 bool avx2_available();
 
-int32_t bitscanforward(int32_t source);
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1400) // Visual Studio 2005
+int32_t bitscanforward(int32_t source); // _BitScanForward is not marked constexpr
+#else
+constexpr int32_t bitscanforward(int32_t source) {
+#if defined(__GNUC__)
+    int32_t success = __builtin_ffs(source);
+    return success - 1;
+#else
+#    pragma message "Falling back to iterative bitscan forward, consider using intrinsics"
+    // This is a low-hanging optimisation boost, check if your compiler offers
+    // any intrinsic.
+    // cf. https://github.com/OpenRCT2/OpenRCT2/pull/2093
+    for (int32_t i = 0; i < 32; i++)
+        if (source & (1u << i))
+            return i;
+
+    return -1;
+#endif
+}
+#endif
+
 void bitcount_init();
 int32_t bitcount(uint32_t source);
 bool strequals(const char* a, const char* b, int32_t length, bool caseInsensitive);
