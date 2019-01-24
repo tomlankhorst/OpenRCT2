@@ -119,6 +119,12 @@ class ror_xor_ror_engine {
       return {_S0, _S1};
   }
 
+  void seed(result_type S0)
+  {
+      _S0 = S0;
+      _S1 = S0;
+  }
+
   void seed(result_type S0, result_type S1)
   {
       _S0 = S0;
