@@ -66,8 +66,6 @@ uint16_t gSavedAge;
 uint32_t gLastAutoSaveUpdate = 0;
 
 uint32_t gScenarioTicks;
-uint32_t gScenarioSrand0;
-uint32_t gScenarioSrand1;
 
 uint8_t gScenarioObjectiveType;
 uint8_t gScenarioObjectiveYear;
@@ -85,13 +83,68 @@ static void scenario_objective_check();
 
 using namespace OpenRCT2;
 
+template<typename _UIntType, _UIntType __M, _UIntType __SA, _UIntType __SB>
+class ror_xor_ror_engine {
+ public:
+
+  using result_type = _UIntType;
+
+  static constexpr result_type mask = __M;
+
+  static constexpr result_type shift_a = __SA;
+
+  static constexpr result_type shift_b = __SB;
+
+  static constexpr result_type min() { return std::numeric_limits<result_type>::min(); }
+
+  static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
+
+  void discard(size_t N)
+  {
+      for (; N != 0; --N)
+          (*this)();
+  }
+
+  result_type operator()()
+  {
+      auto S0z = _S0;
+      _S0 += ror<result_type>(_S1 ^ mask, shift_a);
+      _S1  = ror<result_type>(S0z, shift_b);
+      return _S1;
+  }
+
+  std::pair<result_type, result_type> state() const
+  {
+      return {_S0, _S1};
+  }
+
+  void seed(result_type S0, result_type S1)
+  {
+      _S0 = S0;
+      _S1 = S1;
+  }
+
+ private:
+  result_type _S0;
+  result_type _S1;
+};
+
+using rct_engine_t = ror_xor_ror_engine<uint32_t, 0x1234567F, 7, 3>;
+
+static std::unique_ptr<rct_engine_t> randomEngine;
+
+void scenario_init()
+{
+    randomEngine = std::make_unique<rct_engine_t>();
+}
+
 void scenario_begin()
 {
     game_load_init();
 
     // Set the scenario pseudo-random seeds
-    gScenarioSrand0 ^= platform_get_ticks();
-    gScenarioSrand1 ^= platform_get_ticks();
+    const auto& [s1, s2] = randomEngine->state();
+    randomEngine->seed(s1 ^ platform_get_ticks(), s2 ^ platform_get_ticks());
 
     gParkFlags &= ~PARK_FLAGS_NO_MONEY;
     if (gParkFlags & PARK_FLAGS_NO_MONEY_SCENARIO)
@@ -493,10 +546,6 @@ static const char* realm = "LC";
 uint32_t dbg_scenario_rand(const char* file, const char* function, const uint32_t line, const void* data)
 #endif
 {
-    uint32_t originalSrand0 = gScenarioSrand0;
-    gScenarioSrand0 += ror32(gScenarioSrand1 ^ 0x1234567F, 7);
-    gScenarioSrand1 = ror32(originalSrand0, 3);
-
 #ifdef DEBUG_DESYNC
     if (fp == nullptr)
     {
@@ -520,7 +569,7 @@ uint32_t dbg_scenario_rand(const char* file, const char* function, const uint32_
     }
     if (fp)
     {
-        fprintf(fp, "Tick: %d, Rand: %08X - REF: %s:%u %s (%p)\n", gCurrentTicks, gScenarioSrand1, file, line, function, data);
+        fprintf(fp, "Tick: %d - REF: %s:%u %s (%p)\n", gCurrentTicks, file, line, function, data);
     }
     if (!gInUpdateCode && !gInMapInitCode)
     {
@@ -529,7 +578,16 @@ uint32_t dbg_scenario_rand(const char* file, const char* function, const uint32_
     }
 #endif
 
-    return gScenarioSrand1;
+    return (*randomEngine)();
+}
+
+void scenario_rand_seed(uint32_t s0, uint32_t s1)
+{
+    randomEngine->seed(s0, s1);
+}
+std::pair<uint32_t, uint32_t> scenario_rand_state()
+{
+    return randomEngine->state();
 }
 
 #ifdef DEBUG_DESYNC

@@ -366,8 +366,6 @@ enum
 extern const rct_string_id ScenarioCategoryStringIds[SCENARIO_CATEGORY_COUNT];
 
 extern uint32_t gScenarioTicks;
-extern uint32_t gScenarioSrand0;
-extern uint32_t gScenarioSrand1;
 
 extern uint8_t gScenarioObjectiveType;
 extern uint8_t gScenarioObjectiveYear;
@@ -391,6 +389,7 @@ extern uint32_t gLastAutoSaveUpdate;
 extern char gScenarioFileName[260];
 
 void load_from_sc6(const char* path);
+void scenario_init();
 void scenario_begin();
 void scenario_update();
 
@@ -403,6 +402,8 @@ void dbg_report_desync(uint32_t tick, uint32_t srand0, uint32_t server_srand0, c
 uint32_t scenario_rand();
 #endif
 
+void scenario_rand_seed(uint32_t s0, uint32_t s1);
+std::pair<uint32_t, uint32_t> scenario_rand_state();
 uint32_t scenario_rand_max(uint32_t max);
 
 bool scenario_prepare_for_save();
