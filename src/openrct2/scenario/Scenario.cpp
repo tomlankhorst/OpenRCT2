@@ -97,8 +97,8 @@ void scenario_begin()
     game_load_init();
 
     // Set the scenario pseudo-random seeds
-    const auto& [s1, s2] = randomEngine->state();
-    randomEngine->seed(s1 ^ platform_get_ticks(), s2 ^ platform_get_ticks());
+    const auto& [s0, s1] = randomEngine->state();
+    randomEngine->seed(s0 ^ platform_get_ticks(), s1 ^ platform_get_ticks());
 
     gParkFlags &= ~PARK_FLAGS_NO_MONEY;
     if (gParkFlags & PARK_FLAGS_NO_MONEY_SCENARIO)
