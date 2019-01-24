@@ -37,6 +37,7 @@
 #include "../ride/Track.h"
 #include "../util/SawyerCoding.h"
 #include "../util/Util.h"
+#include "../util/Random.h"
 #include "../windows/Intent.h"
 #include "../world/Climate.h"
 #include "../world/Map.h"
@@ -48,7 +49,6 @@
 #include "ScenarioSources.h"
 
 #include <algorithm>
-#include <utility>
 
 const rct_string_id ScenarioCategoryStringIds[SCENARIO_CATEGORY_COUNT] = {
     STR_BEGINNER_PARKS, STR_CHALLENGING_PARKS,    STR_EXPERT_PARKS, STR_REAL_PARKS, STR_OTHER_PARKS,
@@ -84,65 +84,12 @@ static void scenario_objective_check();
 
 using namespace OpenRCT2;
 
-template<typename _UIntType, _UIntType __M, _UIntType __SA, _UIntType __SB>
-class ror_xor_ror_engine {
- public:
-
-  using result_type = _UIntType;
-
-  static constexpr result_type mask = __M;
-
-  static constexpr result_type shift_a = __SA;
-
-  static constexpr result_type shift_b = __SB;
-
-  static constexpr result_type min() { return std::numeric_limits<result_type>::min(); }
-
-  static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
-
-  void discard(size_t N)
-  {
-      for (; N != 0; --N)
-          (*this)();
-  }
-
-  result_type operator()()
-  {
-      auto S0z = _S0;
-      _S0 += ror<result_type>(_S1 ^ mask, shift_a);
-      _S1  = ror<result_type>(S0z, shift_b);
-      return _S1;
-  }
-
-  std::pair<result_type, result_type> state() const
-  {
-      return {_S0, _S1};
-  }
-
-  void seed(result_type S0)
-  {
-      _S0 = S0;
-      _S1 = S0;
-  }
-
-  void seed(result_type S0, result_type S1)
-  {
-      _S0 = S0;
-      _S1 = S1;
-  }
-
- private:
-  result_type _S0;
-  result_type _S1;
-};
-
-using rct_engine_t = ror_xor_ror_engine<uint32_t, 0x1234567F, 7, 3>;
-
-static std::unique_ptr<rct_engine_t> randomEngine;
+using scenario_rand_engine_t = ror_xor_ror_engine<uint32_t, 0x1234567F, 7, 3>;
+static std::unique_ptr<scenario_rand_engine_t> randomEngine;
 
 void scenario_init()
 {
-    randomEngine = std::make_unique<rct_engine_t>();
+    randomEngine = std::make_unique<scenario_rand_engine_t>();
 }
 
 void scenario_begin()
@@ -592,6 +539,7 @@ void scenario_rand_seed(uint32_t s0, uint32_t s1)
 {
     randomEngine->seed(s0, s1);
 }
+
 std::pair<uint32_t, uint32_t> scenario_rand_state()
 {
     return randomEngine->state();
