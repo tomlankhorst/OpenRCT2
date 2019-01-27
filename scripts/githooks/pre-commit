@@ -1,0 +1,7 @@
+#!/bin/bash
+
+src=`git diff-index --cached --name-only HEAD -- 'src/*.cpp' 'src/*.hpp' 'src/*h'`
+
+if [ ! -z $src ]; then
+    ./scripts/run-clang-format.py $src
+fi
