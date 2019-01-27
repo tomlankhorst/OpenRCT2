@@ -41,6 +41,8 @@ option(ENABLE_LIGHTFX "Enable lighting effects." ON)
 
 option(DISABLE_GUI "Don't build GUI. (Headless only.)")
 
+option(SAVE_OPTIMIZATION_RECORD "Use -fsave-optimization-record, if Clang")
+
 if (FORCE32)
     set(TARGET_M "-m32")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TARGET_M}")
@@ -226,6 +228,13 @@ if (WITH_TESTS)
     endif ()
     include("${ROOT_DIR}/test/tests/CMakeLists.txt" NO_POLICY_SCOPE)
 endif ()
+
+if(SAVE_OPTIMIZATION_RECORD AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsave-optimization-record")
+    message(STATUS "Optimization record will be saved.")
+elseif(SAVE_OPTIMIZATION_RECORD)
+    message(WARNING "The SAVE_OPTIMIZATION_RECORD option is for Clang only.")
+endif()
 
 # Install
 # Don't recurse, grab all *.txt and *.md files
