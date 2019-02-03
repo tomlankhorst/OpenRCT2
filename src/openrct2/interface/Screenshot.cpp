@@ -26,13 +26,19 @@
 #include "../world/Surface.h"
 #include "Viewport.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <memory>
+#include <optional>
+#include <string>
 
+using namespace std::literals::string_literals;
 using namespace OpenRCT2;
 
 uint8_t gScreenshotCountdown = 0;
+
+static std::array<std::string::value_type, 3> validScreenshotCharacters = { ' ', '-', '_' };
 
 static bool WriteDpiToFile(const std::string_view& path, const rct_drawpixelinfo* dpi, const rct_palette& palette)
 {
@@ -93,88 +99,100 @@ static void screenshot_get_rendered_palette(rct_palette* palette)
     }
 }
 
-static int32_t screenshot_get_next_path(char* path, size_t size)
+static std::string screenshot_get_sanitized_park_name()
+{
+    char buffer[128];
+    format_string(buffer, sizeof(buffer), gParkName, &gParkNameArgs);
+    std::string name(buffer);
+
+    // Only allow alpha numeric or whitelisted characters
+    auto isDirtyChar = [](auto& c) {
+        constexpr auto& valid = validScreenshotCharacters;
+        return !(std::isalnum(c) || std::find(valid.begin(), valid.end(), c) != valid.end());
+    };
+    name.erase(std::remove_if(name.begin(), name.end(), isDirtyChar), name.end());
+
+    return name;
+}
+
+static std::optional<std::string> screenshot_get_directory()
 {
     char screenshotPath[MAX_PATH];
-
     platform_get_user_directory(screenshotPath, "screenshot", sizeof(screenshotPath));
-    if (!platform_ensure_directory_exists(screenshotPath))
+
+    if (platform_ensure_directory_exists(screenshotPath))
     {
-        log_error("Unable to save screenshots in OpenRCT2 screenshot directory.\n");
-        return -1;
+        return screenshotPath;
     }
 
-    char park_name[128];
-    format_string(park_name, 128, gParkName, &gParkNameArgs);
+    log_error("Unable to save screenshots in OpenRCT2 screenshot directory.\n");
+    return std::nullopt;
+}
 
-    // Retrieve current time
-    rct2_date currentDate;
-    platform_get_date_local(&currentDate);
-    rct2_time currentTime;
-    platform_get_time_local(&currentTime);
+static std::tuple<rct2_date, rct2_time> screenshot_get_date_time()
+{
+    rct2_date date;
+    platform_get_date_local(&date);
 
-#ifdef _WIN32
-    // On NTFS filesystems, a colon (:) in a path
-    // indicates you want to write a file stream
-    // (hidden metadata). This will pass the
-    // file_exists and fopen checks, since it is
-    // technically valid. We don't want that, so
-    // replace colons with hyphens in the park name.
-    char* foundColon = park_name;
-    while ((foundColon = strchr(foundColon, ':')) != nullptr)
-    {
-        *foundColon = '-';
-    }
-#endif
+    rct2_time time;
+    platform_get_time_local(&time);
 
-    // Glue together path and filename
-    safe_strcpy(path, screenshotPath, size);
-    path_end_with_separator(path, size);
-    auto fileNameCh = strchr(path, '\0');
-    if (fileNameCh == nullptr)
-    {
-        log_error("Unable to generate a screenshot filename.");
-        return -1;
-    }
-    const size_t leftBytes = size - strlen(path);
+    return { date, time };
+}
+
+static std::string screenshot_get_formatted_date_time()
+{
+    auto [date, time] = screenshot_get_date_time();
+    char formatted[20];
     snprintf(
-        fileNameCh, leftBytes, "%s %d-%02d-%02d %02d-%02d-%02d.png", park_name, currentDate.year, currentDate.month,
-        currentDate.day, currentTime.hour, currentTime.minute, currentTime.second);
+        formatted, sizeof(formatted), "%4d-%02d-%02d %02d-%02d-%02d", date.year, date.month, date.day, time.hour, time.minute,
+        time.second);
+    return formatted;
+}
 
-    if (!platform_file_exists(path))
+static std::optional<std::string> screenshot_get_next_path()
+{
+    std::string path;
+    std::string suffix = ".png";
+
+    auto screenshotDirectory = screenshot_get_directory();
+
+    if (screenshotDirectory == std::nullopt)
     {
-        return 0; // path ok
+        return std::nullopt;
     }
 
-    // multiple screenshots with same timestamp
-    // might be possible when switching timezones
-    // in the unlikely case that this does happen,
-    // append (%d) to the filename and increment
-    // this int32_t until it doesn't overwrite any
-    // other file in the directory.
-    int32_t i;
-    for (i = 1; i < 1000; i++)
-    {
-        // Glue together path and filename
-        snprintf(
-            fileNameCh, leftBytes, "%s %d-%02d-%02d %02d-%02d-%02d (%d).png", park_name, currentDate.year, currentDate.month,
-            currentDate.day, currentTime.hour, currentTime.minute, currentTime.second, i);
+    auto parkName = screenshot_get_sanitized_park_name();
+    auto dateTime = screenshot_get_formatted_date_time();
 
-        if (!platform_file_exists(path))
-        {
-            return i;
-        }
+    path = *screenshotDirectory + "/" + parkName + " " + dateTime;
+
+    // Capture the `path` by copy, generate a path with a `tries` number
+    auto path_composer = [ path, &suffix ](int tries) -> auto
+    {
+        return path + ((tries > 0) ? " ("s + std::to_string(tries) + ")" : ""s) + suffix;
+    };
+
+    for (int tries = 0; tries < 100; tries++)
+    {
+        path = path_composer(tries);
+        if (platform_file_exists(path.c_str()))
+            continue;
+
+        return path;
     }
 
     log_error("You have too many saved screenshots saved at exactly the same date and time.\n");
-    return -1;
-}
+
+    return std::nullopt;
+};
 
 std::string screenshot_dump_png(rct_drawpixelinfo* dpi)
 {
     // Get a free screenshot path
-    char path[MAX_PATH] = "";
-    if (screenshot_get_next_path(path, MAX_PATH) == -1)
+    auto path = screenshot_get_next_path();
+
+    if (path == std::nullopt)
     {
         return "";
     }
@@ -182,9 +200,9 @@ std::string screenshot_dump_png(rct_drawpixelinfo* dpi)
     rct_palette renderedPalette;
     screenshot_get_rendered_palette(&renderedPalette);
 
-    if (WriteDpiToFile(path, dpi, renderedPalette))
+    if (WriteDpiToFile(path->c_str(), dpi, renderedPalette))
     {
-        return std::string(path);
+        return *path;
     }
     else
     {
@@ -194,9 +212,9 @@ std::string screenshot_dump_png(rct_drawpixelinfo* dpi)
 
 std::string screenshot_dump_png_32bpp(int32_t width, int32_t height, const void* pixels)
 {
-    // Get a free screenshot path
-    char path[MAX_PATH] = "";
-    if (screenshot_get_next_path(path, MAX_PATH) == -1)
+    auto path = screenshot_get_next_path();
+
+    if (path == std::nullopt)
     {
         return "";
     }
@@ -212,8 +230,8 @@ std::string screenshot_dump_png_32bpp(int32_t width, int32_t height, const void*
         image.Depth = 32;
         image.Stride = width * 4;
         image.Pixels = std::vector<uint8_t>(pixels8, pixels8 + pixelsLen);
-        Imaging::WriteToFile(path, image, IMAGE_FORMAT::PNG_32);
-        return std::string(path);
+        Imaging::WriteToFile(path->c_str(), image, IMAGE_FORMAT::PNG_32);
+        return *path;
     }
     catch (const std::exception& e)
     {
@@ -295,9 +313,8 @@ void screenshot_giant()
 
     viewport_render(&dpi, &viewport, 0, 0, viewport.width, viewport.height);
 
-    // Get a free screenshot path
-    char path[MAX_PATH];
-    if (screenshot_get_next_path(path, MAX_PATH) == -1)
+    auto path = screenshot_get_next_path();
+    if (path == std::nullopt)
     {
         log_error("Giant screenshot failed, unable to find a suitable destination path.");
         context_show_error(STR_SCREENSHOT_FAILED, STR_NONE);
@@ -307,13 +324,13 @@ void screenshot_giant()
     rct_palette renderedPalette;
     screenshot_get_rendered_palette(&renderedPalette);
 
-    WriteDpiToFile(path, &dpi, renderedPalette);
+    WriteDpiToFile(path->c_str(), &dpi, renderedPalette);
 
     free(dpi.bits);
 
     // Show user that screenshot saved successfully
     set_format_arg(0, rct_string_id, STR_STRING);
-    set_format_arg(2, char*, path_get_filename(path));
+    set_format_arg(2, char*, path_get_filename(path->c_str()));
     context_show_error(STR_SCREENSHOT_SAVED_AS, STR_NONE);
 }
 
