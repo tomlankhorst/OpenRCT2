@@ -165,7 +165,7 @@ static std::optional<std::string> screenshot_get_next_path()
     auto parkName = screenshot_get_sanitized_park_name();
     auto dateTime = screenshot_get_formatted_date_time();
 
-    path = *screenshotDirectory + "/" + parkName + " " + dateTime;
+    path = *screenshotDirectory + PATH_SEPARATOR + parkName + " " + dateTime;
 
     // Capture the `path` by copy, generate a path with a `tries` number
     auto path_composer = [ path, &suffix ](int tries) -> auto
