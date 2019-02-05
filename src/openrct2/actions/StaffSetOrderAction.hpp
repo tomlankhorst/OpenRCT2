@@ -54,13 +54,12 @@ public:
     {
         if (_spriteIndex >= MAX_SPRITES)
         {
-            return std::make_unique<GameActionResult>(
-                GA_ERROR::INVALID_PARAMETERS, STR_NONE);
+            return std::make_unique<GameActionResult>(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
         }
 
         rct_peep* peep = GET_PEEP(_spriteIndex);
-        if (peep->type != PEEP_TYPE_STAFF ||
-            (peep->staff_type != STAFF_TYPE_HANDYMAN && peep->staff_type != STAFF_TYPE_MECHANIC))
+        if (peep->type != PEEP_TYPE_STAFF
+            || (peep->staff_type != STAFF_TYPE_HANDYMAN && peep->staff_type != STAFF_TYPE_MECHANIC))
         {
             log_warning("Invalid game command for sprite %u", _spriteIndex);
             return std::make_unique<GameActionResult>(GA_ERROR::INVALID_PARAMETERS, STR_NONE);

@@ -16,8 +16,8 @@
 #include <openrct2/Context.h>
 #include <openrct2/Game.h>
 #include <openrct2/Input.h>
-#include <openrct2/actions/StaffSetOrderAction.hpp>
 #include <openrct2/actions/StaffSetCostumeAction.hpp>
+#include <openrct2/actions/StaffSetOrderAction.hpp>
 #include <openrct2/config/Config.h>
 #include <openrct2/localisation/Localisation.h>
 #include <openrct2/management/Finance.h>
@@ -1443,7 +1443,6 @@ void window_staff_options_dropdown(rct_window* w, rct_widgetindex widgetIndex, i
     if (dropdownIndex == -1)
         return;
 
-    rct_peep* peep = GET_PEEP(w->number);
     uint8_t costume = _availableCostumes[dropdownIndex];
     auto staffSetCostumeAction = StaffSetCostumeAction(w->number, costume);
     GameActions::Execute(&staffSetCostumeAction);
