@@ -179,6 +179,7 @@ const std::vector<NetworkAction> NetworkActions::Actions = {
             GAME_COMMAND_SET_STAFF_PATROL,
             GAME_COMMAND_FIRE_STAFF_MEMBER,
             GAME_COMMAND_SET_STAFF_ORDER,
+            GAME_COMMAND_SET_STAFF_COSTUME,
             GAME_COMMAND_SET_STAFF_COLOUR,
             GAME_COMMAND_SET_STAFF_NAME,
             GAME_COMMAND_PICKUP_STAFF,
