@@ -19,6 +19,7 @@
 #include "ParkSetLoanAction.hpp"
 #include "ParkSetNameAction.hpp"
 #include "ParkSetResearchFundingAction.hpp"
+#include "PauseToggleAction.hpp"
 #include "PlaceParkEntranceAction.hpp"
 #include "PlacePeepSpawnAction.hpp"
 #include "RideCreateAction.hpp"
@@ -69,5 +70,6 @@ namespace GameActions
         Register<SmallSceneryRemoveAction>();
         Register<LargeSceneryRemoveAction>();
         Register<ClearAction>();
+        Register<PauseToggleAction>();
     }
 } // namespace GameActions
