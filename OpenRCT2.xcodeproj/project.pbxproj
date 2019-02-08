@@ -21,6 +21,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		2A02C8D1220DE0C4001BC85B /* RideSetColourScheme.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 2A02C8D0220DE0C4001BC85B /* RideSetColourScheme.hpp */; };
 		2A5354E922099C4F00A5440F /* Network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A5354E822099C4F00A5440F /* Network.cpp */; };
 		2AA050322209A8E300D3A922 /* StaffSetCostumeAction.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 2AA050302209A8E300D3A922 /* StaffSetCostumeAction.hpp */; };
 		2AA050332209A8E300D3A922 /* StaffSetOrdersAction.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 2AA050312209A8E300D3A922 /* StaffSetOrdersAction.hpp */; };
@@ -617,6 +618,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2A02C8D0220DE0C4001BC85B /* RideSetColourScheme.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = RideSetColourScheme.hpp; sourceTree = "<group>"; };
 		2A5354E822099C4F00A5440F /* Network.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Network.cpp; sourceTree = "<group>"; };
 		2A5354EA22099C7200A5440F /* CircularBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CircularBuffer.h; sourceTree = "<group>"; };
 		2A5354EB22099D7700A5440F /* SignSetStyleAction.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SignSetStyleAction.hpp; sourceTree = "<group>"; };
@@ -2002,6 +2004,7 @@
 		C6352B871F477032006CCEE3 /* actions */ = {
 			isa = PBXGroup;
 			children = (
+				2A02C8D0220DE0C4001BC85B /* RideSetColourScheme.hpp */,
 				2AAFD7FB220DD336002461A4 /* RideSetPriceAction.hpp */,
 				2AF7893C220B253E0072754A /* RideSetAppearanceAction.hpp */,
 				2A5354EB22099D7700A5440F /* SignSetStyleAction.hpp */,
@@ -3302,6 +3305,7 @@
 				C67B28172002D67A00109C93 /* Viewport.h in Headers */,
 				939A359C20C12FC800630B3F /* Paint.Sprite.h in Headers */,
 				9308DA04209908090079EE96 /* TileElement.h in Headers */,
+				2A02C8D1220DE0C4001BC85B /* RideSetColourScheme.hpp in Headers */,
 				C67B28152002D67A00109C93 /* Widget.h in Headers */,
 				C6352B951F477032006CCEE3 /* RideCreateAction.hpp in Headers */,
 				C6352B851F477022006CCEE3 /* DataSerialiserTraits.h in Headers */,
