@@ -169,6 +169,11 @@ constexpr Direction direction_reverse(Direction dir)
     return dir ^ 2;
 }
 
+constexpr bool direction_valid(Direction dir)
+{
+    return dir < 4;
+}
+
 struct CoordsXYZD
 {
     int32_t x, y, z;
