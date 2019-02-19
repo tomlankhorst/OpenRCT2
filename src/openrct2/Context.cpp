@@ -423,6 +423,9 @@ namespace OpenRCT2
             _gameState = std::make_unique<GameState>();
             _gameState->InitAll(150);
 
+            // Always create a painter, re-created when graphics are required.
+            _painter = std::make_unique<Painter>(_uiContext);
+
             _titleScreen = std::make_unique<TitleScreen>(*_gameState);
             return true;
         }
