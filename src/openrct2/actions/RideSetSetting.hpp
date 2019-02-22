@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "../ride/RideData.h"
 #include "../ride/Ride.h"
+#include "../ride/RideData.h"
 #include "GameAction.h"
 
 enum class RideSetSetting : uint8_t
@@ -113,7 +113,7 @@ public:
                 if (!ride_is_valid_operation_option(ride))
                 {
                     log_warning("Invalid operation option value: %u", _value);
-                    return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_CANT_CHANGE_OPERATING_MODE);
+                    return MakeResult(GA_ERROR::INVALID_PARAMETERS, GetOperationErrorMessage(ride));
                 }
                 break;
             case RideSetSetting::InspectionInterval:
@@ -298,5 +298,34 @@ private:
         }
 
         return _value >= minValue && _value <= maxValue;
+    }
+
+    rct_string_id GetOperationErrorMessage(Ride * ride) const
+    {
+        switch (ride->mode)
+        {
+            case RIDE_MODE_STATION_TO_STATION:
+                return STR_CANT_CHANGE_SPEED;
+            case RIDE_MODE_RACE:
+                return STR_CANT_CHANGE_NUMBER_OF_LAPS;
+            case RIDE_MODE_BUMPERCAR:
+                return STR_CANT_CHANGE_TIME_LIMIT;
+            case RIDE_MODE_SWING:
+                return STR_CANT_CHANGE_NUMBER_OF_SWINGS;
+            case RIDE_MODE_ROTATION:
+            case RIDE_MODE_FORWARD_ROTATION:
+            case RIDE_MODE_BACKWARD_ROTATION:
+                return STR_CANT_CHANGE_NUMBER_OF_ROTATIONS;
+            default:
+                if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_NO_VEHICLES))
+                {
+                    return STR_CANT_CHANGE_THIS;
+                }
+                else
+                {
+                    return STR_CANT_CHANGE_LAUNCH_SPEED;
+                }
+                break;
+        }
     }
 };

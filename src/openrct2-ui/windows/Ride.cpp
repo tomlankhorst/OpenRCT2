@@ -2254,8 +2254,9 @@ static void populate_vehicle_type_dropdown(Ride* ride)
     bool selectionShouldBeExpanded;
     int32_t rideTypeIterator, rideTypeIteratorMax;
     if (gCheatsShowVehiclesFromOtherTrackTypes
-        && !(ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE) || ride->type == RIDE_TYPE_MAZE
-             || ride->type == RIDE_TYPE_MINI_GOLF))
+        && !(
+            ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE) || ride->type == RIDE_TYPE_MAZE
+            || ride->type == RIDE_TYPE_MINI_GOLF))
     {
         selectionShouldBeExpanded = true;
         rideTypeIterator = 0;
@@ -3186,28 +3187,6 @@ static void window_ride_vehicle_scrollpaint(rct_window* w, rct_drawpixelinfo* dp
 
 #pragma region Operating
 
-static void window_ride_mode_tweak_set(rct_window* w, uint8_t value)
-{
-    Ride* ride = get_ride(w->number);
-
-    gGameCommandErrorTitle = STR_CANT_CHANGE_LAUNCH_SPEED;
-    if (ride->mode == RIDE_MODE_STATION_TO_STATION)
-        gGameCommandErrorTitle = STR_CANT_CHANGE_SPEED;
-    if (ride->mode == RIDE_MODE_RACE)
-        gGameCommandErrorTitle = STR_CANT_CHANGE_NUMBER_OF_LAPS;
-    if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_NO_VEHICLES))
-        gGameCommandErrorTitle = STR_CANT_CHANGE_THIS;
-    if (ride->mode == RIDE_MODE_BUMPERCAR)
-        gGameCommandErrorTitle = STR_CANT_CHANGE_TIME_LIMIT;
-    if (ride->mode == RIDE_MODE_SWING)
-        gGameCommandErrorTitle = STR_CANT_CHANGE_NUMBER_OF_SWINGS;
-    if (ride->mode == RIDE_MODE_ROTATION || ride->mode == RIDE_MODE_FORWARD_ROTATION
-        || ride->mode == RIDE_MODE_BACKWARD_ROTATION)
-        gGameCommandErrorTitle = STR_CANT_CHANGE_NUMBER_OF_ROTATIONS;
-
-    set_operating_setting(w->number, RideSetSetting::Operation, value);
-}
-
 /**
  *
  *  rct2: 0x006B11D5
@@ -3226,7 +3205,8 @@ static void window_ride_mode_tweak_increase(rct_window* w)
 
     uint8_t increment = ride->mode == RIDE_MODE_BUMPERCAR ? 10 : 1;
 
-    window_ride_mode_tweak_set(w, std::clamp<int16_t>(ride->operation_option + increment, minValue, maxValue));
+    set_operating_setting(
+        w->number, RideSetSetting::Operation, std::clamp<int16_t>(ride->operation_option + increment, minValue, maxValue));
 }
 
 /**
@@ -3246,7 +3226,8 @@ static void window_ride_mode_tweak_decrease(rct_window* w)
 
     uint8_t decrement = ride->mode == RIDE_MODE_BUMPERCAR ? 10 : 1;
 
-    window_ride_mode_tweak_set(w, std::clamp<int16_t>(ride->operation_option - decrement, minValue, maxValue));
+    set_operating_setting(
+        w->number, RideSetSetting::Operation, std::clamp<int16_t>(ride->operation_option - decrement, minValue, maxValue));
 }
 
 /**
