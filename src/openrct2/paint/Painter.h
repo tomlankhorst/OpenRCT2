@@ -10,13 +10,13 @@
 #pragma once
 
 #include "../common.h"
+#include "Paint.h"
 
 #include <ctime>
 #include <memory>
 #include <vector>
 
 struct rct_drawpixelinfo;
-struct paint_session;
 
 namespace OpenRCT2
 {
