@@ -158,7 +158,7 @@ paint_session* Painter::CreateSession(rct_drawpixelinfo* dpi, uint32_t viewFlags
     else
     {
         // Create new one in pool.
-        _paintSessionPool.emplace_back();
+        _paintSessionPool.emplace_back(std::make_unique<paint_session>());
         session = _paintSessionPool.back().get();
     }
 
