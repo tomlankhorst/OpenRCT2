@@ -153,7 +153,7 @@ paint_session* Painter::CreateSession(rct_drawpixelinfo* dpi, uint32_t viewFlags
         session = _freePaintSessions[idx];
 
         // Shrink by one.
-        _freePaintSessions.resize(_freePaintSessions.size() - 1);
+        _freePaintSessions.pop_back();
     }
     else
     {
