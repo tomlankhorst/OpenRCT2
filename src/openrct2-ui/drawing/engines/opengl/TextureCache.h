@@ -199,7 +199,12 @@ private:
     std::array<uint32_t, 0x7FFFF> _indexMap;
 
     GLuint _paletteTexture = 0;
+#ifdef __MACOSX__
+    // Shared mutex is only available macOS 10.12 or higher.
+    std::mutex _mutex;
+#else
     std::shared_mutex _mutex;
+#endif
 
 public:
     TextureCache();
