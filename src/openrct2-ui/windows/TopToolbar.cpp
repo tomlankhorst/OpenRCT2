@@ -28,6 +28,7 @@
 #include <openrct2/actions/ClearAction.hpp>
 #include <openrct2/actions/LoadOrQuitAction.hpp>
 #include <openrct2/actions/PauseToggleAction.hpp>
+#include <openrct2/actions/SmallSceneryPlaceAction.hpp>
 #include <openrct2/audio/audio.h>
 #include <openrct2/config/Config.h>
 #include <openrct2/interface/Chat.h>
@@ -1755,29 +1756,25 @@ static void window_top_toolbar_scenery_tool_down(int16_t x, int16_t y, rct_windo
                     zAttemptRange = 20;
                 }
 
-                bool success = false;
+                GA_ERROR success = GA_ERROR::UNKNOWN;
+                uint8_t quadrant = parameter_2 & 0xFF;
+                uint8_t primaryColour = (parameter_2 >> 8) & 0xFF;
+                uint8_t secondaryColour = (parameter_3 >> 16) & 0xFF;
+                uint8_t type = (parameter_1 >> 8) & 0xFF;
                 for (; zAttemptRange != 0; zAttemptRange--)
                 {
-                    int32_t flags = GAME_COMMAND_FLAG_APPLY | (parameter_1 & 0xFF00);
+                    auto smallSceneryPlaceAction = SmallSceneryPlaceAction(
+                        { cur_grid_x, cur_grid_y, gSceneryPlaceZ, gSceneryPlaceRotation }, quadrant, type, primaryColour,
+                        secondaryColour);
+                    auto res = GameActions::Query(&smallSceneryPlaceAction);
 
-                    gDisableErrorWindowSound = true;
-                    gGameCommandErrorTitle = STR_CANT_POSITION_THIS_HERE;
-                    int32_t cost = game_do_command(
-                        cur_grid_x, flags, cur_grid_y, parameter_2, GAME_COMMAND_PLACE_SCENERY,
-                        gSceneryPlaceRotation | (parameter_3 & 0xFFFF0000), gSceneryPlaceZ);
-                    gDisableErrorWindowSound = false;
-
-                    if (cost != MONEY32_UNDEFINED)
+                    success = res->Error;
+                    if (res->Error == GA_ERROR::OK)
                     {
-                        window_close_by_class(WC_ERROR);
-                        audio_play_sound_at_location(
-                            SOUND_PLACE_ITEM, gCommandPosition.x, gCommandPosition.y, gCommandPosition.z);
-                        success = true;
                         break;
                     }
 
-                    if (gGameCommandErrorText == STR_NOT_ENOUGH_CASH_REQUIRES
-                        || gGameCommandErrorText == STR_CAN_ONLY_BUILD_THIS_ON_WATER)
+                    if (res->Error == GA_ERROR::INSUFFICIENT_FUNDS)
                     {
                         break;
                     }
@@ -1785,13 +1782,25 @@ static void window_top_toolbar_scenery_tool_down(int16_t x, int16_t y, rct_windo
                     gSceneryPlaceZ += 8;
                 }
 
-                if (success)
+                if (success == GA_ERROR::OK)
                 {
-                    successfulPlacements++;
+                    auto smallSceneryPlaceAction = SmallSceneryPlaceAction(
+                        { cur_grid_x, cur_grid_y, gSceneryPlaceZ, gSceneryPlaceRotation }, quadrant, type, primaryColour,
+                        secondaryColour);
+
+                    smallSceneryPlaceAction.SetCallback([](const GameAction* ga, const GameActionResult* result) {
+                        audio_play_sound_at_location(
+                            SOUND_PLACE_ITEM, result->Position.x, result->Position.y, result->Position.z);
+                    });
+                    auto res = GameActions::Execute(&smallSceneryPlaceAction);
+                    if (res->Error == GA_ERROR::OK)
+                    {
+                        successfulPlacements++;
+                    }
                 }
                 else
                 {
-                    if (gGameCommandErrorText == STR_NOT_ENOUGH_CASH_REQUIRES)
+                    if (success == GA_ERROR::INSUFFICIENT_FUNDS)
                     {
                         break;
                     }
@@ -1802,10 +1811,6 @@ static void window_top_toolbar_scenery_tool_down(int16_t x, int16_t y, rct_windo
             if (successfulPlacements > 0)
             {
                 window_close_by_class(WC_ERROR);
-            }
-            else
-            {
-                audio_play_sound_at_location(SOUND_ERROR, gCommandPosition.x, gCommandPosition.y, gCommandPosition.z);
             }
             break;
         }

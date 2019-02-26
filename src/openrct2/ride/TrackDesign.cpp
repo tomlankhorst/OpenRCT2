@@ -932,6 +932,7 @@ static int32_t track_design_place_scenery(
                 switch (entry_type)
                 {
                     case OBJECT_TYPE_SMALL_SCENERY:
+                    {
                         if (mode != 0)
                         {
                             continue;
@@ -974,6 +975,7 @@ static int32_t track_design_place_scenery(
 
                         cost = res->Error == GA_ERROR::OK ? res->Cost : 0;
                         break;
+                    }
                     case OBJECT_TYPE_LARGE_SCENERY:
                         if (mode != 0)
                         {

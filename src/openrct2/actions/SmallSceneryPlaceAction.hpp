@@ -18,10 +18,13 @@
 #include "../localisation/StringIds.h"
 #include "../management/Finance.h"
 #include "../ride/Ride.h"
+#include "../ride/TrackDesign.h"
 #include "../world/TileElement.h"
 #include "../world/Park.h"
 #include "../world/SmallScenery.h"
 #include "../world/Sprite.h"
+#include "../world/Surface.h"
+#include "../world/MapAnimation.h"
 #include "GameAction.h"
 
 DEFINE_GAME_ACTION(SmallSceneryPlaceAction, GAME_COMMAND_PLACE_SCENERY, GameActionResult)
@@ -167,7 +170,7 @@ public:
 
             if (surfaceElement != nullptr && surfaceElement->AsSurface()->GetWaterHeight() > 0)
             {
-                if ((surfaceElement->AsSurface()->GetWaterHeight() * 16) > targetHeight)
+                if (static_cast<int32_t>((surfaceElement->AsSurface()->GetWaterHeight() * 16)) > targetHeight)
                 {
                     return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, STR_CAN_ONLY_BUILD_THIS_ON_LAND);
                 }
