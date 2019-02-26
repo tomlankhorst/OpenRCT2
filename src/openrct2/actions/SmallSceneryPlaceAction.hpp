@@ -27,8 +27,7 @@
 DEFINE_GAME_ACTION(SmallSceneryPlaceAction, GAME_COMMAND_PLACE_SCENERY, GameActionResult)
 {
 private:
-    CoordsXYZ _loc;
-    uint8_t _rotation;
+    CoordsXYZD _loc;
     uint8_t _quadrant;
     uint8_t _sceneryType;
     uint8_t _primaryColour;
@@ -38,10 +37,9 @@ public:
     SmallSceneryPlaceAction() = default;
 
     SmallSceneryPlaceAction(
-        CoordsXYZ loc, uint8_t quadrant, uint8_t rotation, uint8_t sceneryType,
+        CoordsXYZD loc, uint8_t quadrant, uint8_t sceneryType,
         uint8_t primaryColour, uint8_t secondaryColour)
         : _loc(loc)
-        , _rotation(rotation)
         , _quadrant(quadrant)
         , _sceneryType(sceneryType)
         , _primaryColour(primaryColour)
@@ -58,7 +56,7 @@ public:
     {
         GameAction::Serialise(stream);
 
-        stream << DS_TAG(_loc) << DS_TAG(_rotation) << DS_TAG(_quadrant) << DS_TAG(_sceneryType) << DS_TAG(_primaryColour) << DS_TAG(_secondaryColour);
+        stream << DS_TAG(_loc) << DS_TAG(_quadrant) << DS_TAG(_sceneryType) << DS_TAG(_primaryColour) << DS_TAG(_secondaryColour);
     }
 
     GameActionResult::Ptr Query() const override
@@ -87,18 +85,18 @@ public:
 
         if (!map_check_free_elements_and_reorganise(1))
         {
-            return MakeResult(GA_ERROR::NO_FREE_ELEMENTS, STR_NONE);
+            return MakeResult(GA_ERROR::NO_FREE_ELEMENTS, STR_CANT_POSITION_THIS_HERE);
         }
 
         if (!byte_9D8150 && (_loc.x > gMapSizeMaxXY || _loc.y > gMapSizeMaxXY))
         {
-            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_CANT_POSITION_THIS_HERE);
         }
 
         rct_scenery_entry* sceneryEntry = get_small_scenery_entry(_sceneryType);
         if (sceneryEntry == nullptr)
         {
-            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_CANT_POSITION_THIS_HERE);
         }
 
         auto quadrant = _quadrant;
@@ -146,7 +144,7 @@ public:
         if (!(gScreenFlags & SCREEN_FLAGS_SCENARIO_EDITOR) && !gCheatsSandboxMode
             && !map_is_location_owned(_loc.x, _loc.y, targetHeight))
         {
-            return MakeResult(GA_ERROR::NOT_OWNED, STR_NONE);
+            return MakeResult(GA_ERROR::NOT_OWNED, STR_CANT_POSITION_THIS_HERE);
         }
 
         TileElement* surfaceElement = map_get_surface_element_at({ _loc.x, _loc.y });
@@ -156,7 +154,7 @@ public:
             int32_t water_height = (surfaceElement->AsSurface()->GetWaterHeight() * 16) - 1;
             if (water_height > targetHeight)
             {
-                return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_BUILD_THIS_UNDERWATER);
+                return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, STR_CANT_BUILD_THIS_UNDERWATER);
             }
         }
 
@@ -164,14 +162,14 @@ public:
         {
             if (isOnWater)
             {
-                return MakeResult(GA_ERROR::DISALLOWED, STR_CAN_ONLY_BUILD_THIS_ON_LAND);
+                return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, STR_CAN_ONLY_BUILD_THIS_ON_LAND);
             }
 
             if (surfaceElement != nullptr && surfaceElement->AsSurface()->GetWaterHeight() > 0)
             {
                 if ((surfaceElement->AsSurface()->GetWaterHeight() * 16) > targetHeight)
                 {
-                    return MakeResult(GA_ERROR::DISALLOWED, STR_CAN_ONLY_BUILD_THIS_ON_LAND);
+                    return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, STR_CAN_ONLY_BUILD_THIS_ON_LAND);
                 }
             }
         }
@@ -180,7 +178,7 @@ public:
             && (scenery_small_entry_has_flag(sceneryEntry, SMALL_SCENERY_FLAG_REQUIRE_FLAT_SURFACE)) && !supportsRequired
             && !isOnWater && surfaceElement != nullptr && (surfaceElement->AsSurface()->GetSlope() != TILE_ELEMENT_SLOPE_FLAT))
         {
-            return MakeResult(GA_ERROR::DISALLOWED, STR_LEVEL_LAND_REQUIRED);
+            return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, STR_LEVEL_LAND_REQUIRED);
         }
 
         if (!gCheatsDisableSupportLimits && !(scenery_small_entry_has_flag(sceneryEntry, SMALL_SCENERY_FLAG_STACKABLE))
@@ -192,13 +190,13 @@ public:
                 {
                     if (surfaceElement->AsSurface()->GetWaterHeight() || (surfaceElement->base_height * 8) != targetHeight)
                     {
-                        return MakeResult(GA_ERROR::DISALLOWED, STR_LEVEL_LAND_REQUIRED);
+                        return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, STR_LEVEL_LAND_REQUIRED);
                     }
                 }
             }
             else
             {
-                return MakeResult(GA_ERROR::DISALLOWED, STR_CAN_ONLY_BUILD_THIS_ON_LAND);
+                return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, STR_CAN_ONLY_BUILD_THIS_ON_LAND);
             }
         }
 
@@ -218,19 +216,19 @@ public:
             {
                 if (scenery_small_entry_has_flag(sceneryEntry, SMALL_SCENERY_FLAG_THREE_QUARTERS))
                 {
-                    quadRotation = ((quadrant ^ 2) + _rotation) & 3;
+                    quadRotation = ((quadrant ^ 2) + _loc.direction) & 3;
                     collisionQuadrants = 0b1011;
                 }
                 else
                 {
-                    quadRotation = (quadrant + _rotation) & 1;
+                    quadRotation = (quadrant + _loc.direction) & 1;
                     collisionQuadrants = 0b1010;
                 }
             }
         }
         else
         {
-            quadRotation = ((quadrant ^ 2) + _rotation) & 3;
+            quadRotation = ((quadrant ^ 2) + _loc.direction) & 3;
             collisionQuadrants = 0b0011;
         }
         uint8_t supports = 0;
@@ -247,12 +245,11 @@ public:
                    _loc.x, _loc.y, zLow, zHigh, &map_place_scenery_clear_func, quarterTile, GetFlags(), &clearCost,
                    CREATE_CROSSING_MODE_NONE))
         {
-            return MakeResult(GA_ERROR::DISALLOWED, STR_NONE, gGameCommandErrorText, gCommonFormatArgs);
+            return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, gGameCommandErrorText, gCommonFormatArgs);
         }
 
         gSceneryGroundFlags = gMapGroundFlags & (ELEMENT_IS_ABOVE_GROUND | ELEMENT_IS_UNDERGROUND);
 
-        auto res = MakeResult();
         res->ExpenditureType = RCT_EXPENDITURE_TYPE_LANDSCAPING;
         res->Cost = (sceneryEntry->small_scenery.price * 10) + clearCost;
 
@@ -286,7 +283,7 @@ public:
         rct_scenery_entry* sceneryEntry = get_small_scenery_entry(_sceneryType);
         if (sceneryEntry == nullptr)
         {
-            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_CANT_POSITION_THIS_HERE);
         }
 
         auto quadrant = _quadrant;
@@ -356,19 +353,19 @@ public:
             {
                 if (scenery_small_entry_has_flag(sceneryEntry, SMALL_SCENERY_FLAG_THREE_QUARTERS))
                 {
-                    quadRotation = ((quadrant ^ 2) + _rotation) & 3;
+                    quadRotation = ((quadrant ^ 2) + _loc.direction) & 3;
                     collisionQuadrants = 0b1011;
                 }
                 else
                 {
-                    quadRotation = (quadrant + _rotation) & 1;
+                    quadRotation = (quadrant + _loc.direction) & 1;
                     collisionQuadrants = 0b1010;
                 }
             }
         }
         else
         {
-            quadRotation = ((quadrant ^ 2) + _rotation) & 3;
+            quadRotation = ((quadrant ^ 2) + _loc.direction) & 3;
             collisionQuadrants = 0b0011;
         }
         uint8_t supports = 0;
@@ -385,12 +382,11 @@ public:
                    _loc.x, _loc.y, zLow, zHigh, &map_place_scenery_clear_func, quarterTile, GetFlags(), &clearCost,
                    CREATE_CROSSING_MODE_NONE))
         {
-            return MakeResult(GA_ERROR::DISALLOWED, STR_NONE, gGameCommandErrorText, gCommonFormatArgs);
+            return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_POSITION_THIS_HERE, gGameCommandErrorText, gCommonFormatArgs);
         }
 
         gSceneryGroundFlags = gMapGroundFlags & (ELEMENT_IS_ABOVE_GROUND | ELEMENT_IS_UNDERGROUND);
 
-        auto res = MakeResult();
         res->ExpenditureType = RCT_EXPENDITURE_TYPE_LANDSCAPING;
         res->Cost = (sceneryEntry->small_scenery.price * 10) + clearCost;
 
@@ -398,14 +394,14 @@ public:
         assert(newElement != nullptr);
         gSceneryTileElement = newElement;
         newElement->SetType(TILE_ELEMENT_TYPE_SMALL_SCENERY);
-        newElement->SetDirection(_rotation);
+        newElement->SetDirection(_loc.direction);
         SmallSceneryElement* sceneryElement = newElement->AsSmallScenery();
         sceneryElement->SetSceneryQuadrant(quadrant);
         sceneryElement->SetEntryIndex(_sceneryType);
         sceneryElement->SetAge(0);
         sceneryElement->SetPrimaryColour(_primaryColour);
         sceneryElement->SetSecondaryColour(_secondaryColour);
-        newElement->clearance_height = newElement->base_height + ((sceneryEntry->small_scenery.height + 7) / 8);
+        sceneryElement->clearance_height = sceneryElement->base_height + ((sceneryEntry->small_scenery.height + 7) / 8);
 
         if (supportsRequired)
         {
@@ -414,13 +410,13 @@ public:
 
         if (GetFlags() & GAME_COMMAND_FLAG_GHOST)
         {
-            newElement->flags |= TILE_ELEMENT_FLAG_GHOST;
+            sceneryElement->SetGhost(true);
         }
 
         map_invalidate_tile_full(_loc.x, _loc.y);
         if (scenery_small_entry_has_flag(sceneryEntry, SMALL_SCENERY_FLAG_ANIMATED))
         {
-            map_animation_create(2, _loc.x, _loc.y, newElement->base_height);
+            map_animation_create(2, _loc.x, _loc.y, sceneryElement->base_height);
         }
 
         return res;

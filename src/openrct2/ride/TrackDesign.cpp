@@ -14,6 +14,7 @@
 #include "../OpenRCT2.h"
 #include "../actions/LargeSceneryRemoveAction.hpp"
 #include "../actions/RideSetVehiclesAction.hpp"
+#include "../actions/SmallSceneryPlaceAction.hpp"
 #include "../actions/SmallSceneryRemoveAction.hpp"
 #include "../actions/TrackPlaceAction.hpp"
 #include "../actions/TrackRemoveAction.hpp"
@@ -825,9 +826,9 @@ static int32_t track_design_place_scenery(
                         if (!(!scenery_small_entry_has_flag(small_scenery, SMALL_SCENERY_FLAG_FULL_TILE)
                               && scenery_small_entry_has_flag(small_scenery, SMALL_SCENERY_FLAG_DIAGONAL))
                             && scenery_small_entry_has_flag(
-                                   small_scenery,
-                                   SMALL_SCENERY_FLAG_DIAGONAL | SMALL_SCENERY_FLAG_HALF_SPACE
-                                       | SMALL_SCENERY_FLAG_THREE_QUARTERS))
+                                small_scenery,
+                                SMALL_SCENERY_FLAG_DIAGONAL | SMALL_SCENERY_FLAG_HALF_SPACE
+                                    | SMALL_SCENERY_FLAG_THREE_QUARTERS))
                         {
                             quadrant = 0;
                         }
@@ -963,14 +964,15 @@ static int32_t track_design_place_scenery(
 
                         gGameCommandErrorTitle = STR_CANT_POSITION_THIS_HERE;
 
-                        cost = game_do_command(
-                            mapCoord.x, flags | (entry_index << 8), mapCoord.y, quadrant | (scenery->primary_colour << 8),
-                            GAME_COMMAND_PLACE_SCENERY, rotation | (scenery->secondary_colour << 16), z);
+                        auto smallSceneryPlace = SmallSceneryPlaceAction(
+                            { mapCoord.x, mapCoord.y, z, rotation }, quadrant, entry_index, scenery->primary_colour,
+                            scenery->secondary_colour);
 
-                        if (cost == MONEY32_UNDEFINED)
-                        {
-                            cost = 0;
-                        }
+                        smallSceneryPlace.SetFlags(flags);
+                        auto res = flags & GAME_COMMAND_FLAG_APPLY ? GameActions::ExecuteNested(&smallSceneryPlace)
+                                                                   : GameActions::QueryNested(&smallSceneryPlace);
+
+                        cost = res->Error == GA_ERROR::OK ? res->Cost : 0;
                         break;
                     case OBJECT_TYPE_LARGE_SCENERY:
                         if (mode != 0)
