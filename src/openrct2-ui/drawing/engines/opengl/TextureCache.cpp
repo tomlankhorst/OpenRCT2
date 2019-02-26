@@ -69,7 +69,7 @@ BasicTextureInfo TextureCache::GetOrLoadImageTexture(uint32_t image)
 
     // Try to read cached texture first.
     {
-        std::shared_lock lock(_mutex);
+        std::unique_lock lock(_mutex);
 
         index = _indexMap[image];
         if (index != UNUSED_INDEX)
@@ -102,7 +102,7 @@ BasicTextureInfo TextureCache::GetOrLoadGlyphTexture(uint32_t image, uint8_t* pa
 
     // Try to read cached texture first.
     {
-        std::shared_lock lock(_mutex);
+        std::unique_lock lock(_mutex);
 
         std::copy_n(palette, sizeof(glyphId.Palette), (uint8_t*)&glyphId.Palette);
 
