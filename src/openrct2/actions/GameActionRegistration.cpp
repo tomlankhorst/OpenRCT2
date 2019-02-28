@@ -46,6 +46,7 @@
 #include "TrackPlaceAction.hpp"
 #include "TrackRemoveAction.hpp"
 #include "WallRemoveAction.hpp"
+#include "WaterSetHeightAction.hpp"
 
 namespace GameActions
 {
@@ -89,5 +90,6 @@ namespace GameActions
         Register<ClearAction>();
         Register<PauseToggleAction>();
         Register<LoadOrQuitAction>();
+        Register<WaterSetHeightAction>();
     }
 } // namespace GameActions
