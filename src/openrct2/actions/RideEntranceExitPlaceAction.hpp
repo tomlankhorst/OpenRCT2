@@ -10,11 +10,11 @@
 #pragma once
 
 #include "../actions/RideEntranceExitRemoveAction.hpp"
+#include "../management/Finance.h"
 #include "../ride/Ride.h"
 #include "../ride/Station.h"
 #include "../world/Entrance.h"
 #include "../world/MapAnimation.h"
-#include "../management/Finance.h"
 #include "../world/Sprite.h"
 #include "GameAction.h"
 
