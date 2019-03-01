@@ -1277,7 +1277,7 @@ GAME_COMMAND_POINTER* new_game_command_table[GAME_COMMAND_COUNT] = {
     nullptr,
     nullptr,
     game_command_set_water_height,
-    game_command_place_footpath,
+    nullptr,
     game_command_place_footpath_from_track,
     nullptr,
     game_command_change_surface_style,
