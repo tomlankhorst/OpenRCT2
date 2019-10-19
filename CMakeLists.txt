@@ -253,7 +253,7 @@ add_custom_command(
     COMMAND ./openrct2-cli sprite build \"${CMAKE_BINARY_DIR}/g2.dat\" \"${ROOT_DIR}/resources/g2/sprites.json\"
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
-add_custom_target(g2 DEPENDS ${PROJECT} g2.dat)
+add_custom_target(g2 DEPENDS openrct2-cli g2.dat)
 
 # Include tests
 if (WITH_TESTS)
